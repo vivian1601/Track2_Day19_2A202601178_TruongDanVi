@@ -4,6 +4,17 @@
 
 set -euo pipefail
 
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys' >/dev/null 2>&1; then
+  SYSTEM_PYTHON=python3
+elif command -v python >/dev/null 2>&1 && python -c 'import sys' >/dev/null 2>&1; then
+  SYSTEM_PYTHON=python
+elif command -v py >/dev/null 2>&1 && py -3 -c 'import sys' >/dev/null 2>&1; then
+  SYSTEM_PYTHON="py -3"
+else
+  echo "[docker] Python 3 not found. Install Python 3.10+ and enable 'Add Python to PATH'."
+  exit 1
+fi
+
 echo "[docker] Day 19 full Docker setup"
 echo "[docker] Stack: Qdrant (server) + Redis + Postgres + bge-m3 embeddings"
 echo "[docker] Note: bge-m3 is multilingual (much better on Vietnamese) but"
@@ -60,11 +71,15 @@ if [ ! -d ".venv" ]; then
   if command -v uv >/dev/null 2>&1; then
     uv venv .venv
   else
-    python3 -m venv .venv
+    $SYSTEM_PYTHON -m venv .venv
   fi
 fi
 # shellcheck source=/dev/null
-source .venv/bin/activate
+if [ -f .venv/Scripts/activate ]; then
+  source .venv/Scripts/activate
+else
+  source .venv/bin/activate
+fi
 
 # ── 4. Install lite + docker extras ─────────────────────────────────────
 NEED_DILL_OVERRIDE=$(python -c 'import sys; print(1 if sys.version_info >= (3,14) else 0)')
@@ -121,7 +136,7 @@ cat <<EOF
 
 Activate the venv and continue:
 
-    source .venv/bin/activate
+    source .venv/Scripts/activate  # Git Bash / Windows
     make api       # start FastAPI on :8000
     make lab       # open Jupyter on :8888
 

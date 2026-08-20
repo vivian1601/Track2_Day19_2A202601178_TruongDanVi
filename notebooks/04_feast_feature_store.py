@@ -185,7 +185,10 @@ else:
 import pandas as pd
 entity_df = pd.DataFrame({
     "user_id": ["u_001", "u_002", "u_003"],
-    "event_timestamp": [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+    # The generated profile timestamps are NOW-1h, NOW-2h, and NOW-3h for
+    # u_001/u_002/u_003.  Each entity timestamp must be at or after its feature
+    # timestamp; otherwise Feast correctly rejects that future feature value.
+    "event_timestamp": [NOW - timedelta(hours=1), NOW - timedelta(hours=1), NOW],
 })
 
 historical = fs.get_historical_features(
@@ -196,6 +199,7 @@ historical = fs.get_historical_features(
     ],
 ).to_df()
 print(historical)
+assert len(historical) == 3, "Expected one PIT-join row for each input entity"
 
 # %% [markdown]
 # ## Deliverable evidence

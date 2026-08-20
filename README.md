@@ -24,6 +24,26 @@ Build hybrid search API + Feast feature store hoàn chỉnh, đo Precision@10 v�
 
 ## Quick Start — Lite (recommended)
 
+### Windows + Git Bash
+
+Mở **Git Bash** (không dùng `C:\\Windows\\System32\\bash.exe`/WSL), và chạy:
+
+```bash
+cd /c/Users/truon/Downloads/AI_G135_Project/Track2_Day19_2A202601178_TruongDanVi
+bash setup-lite.sh
+source .venv/Scripts/activate
+```
+
+Script tự nhận `python3`, `python`, hoặc `py -3`, và tự dùng đúng thư mục
+`.venv/Scripts` trên Windows. Nếu Git Bash không có `make`, có thể chạy trực tiếp:
+
+```bash
+uvicorn app.main:app --reload --port 8000
+jupyter lab --notebook-dir=notebooks --ServerApp.token='' --no-browser
+python scripts/benchmark.py
+pytest -q
+```
+
 ```bash
 git clone https://github.com/<your-username>/Day19-Track2-VectorFeatureStore-Lab.git
 cd Day19-Track2-VectorFeatureStore-Lab

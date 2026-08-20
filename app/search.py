@@ -179,8 +179,10 @@ class Searcher:
         ]
 
     def _search_hybrid(self, query: str, top_k: int, rrf_k: int) -> list[SearchHit]:
-        # Pull a deeper top-K from each retriever so RRF has signal beyond top-10.
-        depth = max(top_k * 5, 50)
+        # A 2x candidate pool is enough to fuse the top-10 on this 1,000-document
+        # teaching corpus.  The previous hard minimum of 50 added avoidable
+        # Qdrant/payload work and caused latency spikes on Windows laptops.
+        depth = max(top_k * 2, 20)
         kw_hits = self._search_keyword(query, depth)
         sem_hits = self._search_semantic(query, depth)
 

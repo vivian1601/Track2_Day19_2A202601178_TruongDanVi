@@ -73,16 +73,18 @@ for h in body["hits"][:3]:
 
 # %%
 import json
+import numpy as np
 
 DATA = ROOT / "data"
 golden = [json.loads(l) for l in (DATA / "golden_set.jsonl").open(encoding="utf-8")]
 
 
 def percentile(values: list[float], p: float) -> float:
-    n = len(values)
-    if n == 0:
+    if not values:
         return 0.0
-    return sorted(values)[min(int(n * p), n - 1)]
+    # Linear interpolation avoids treating the single slowest request as P99
+    # when the benchmark contains exactly 100 samples.
+    return float(np.percentile(values, p * 100))
 
 
 def benchmark_mode(mode: str, reps: int = 2) -> dict[str, float]:
@@ -102,9 +104,20 @@ def benchmark_mode(mode: str, reps: int = 2) -> dict[str, float]:
     }
 
 
+def warmup_mode(mode: str, num_queries: int = 10) -> None:
+    """Warm caches and model execution paths without recording latency."""
+    for q in golden[:num_queries]:
+        response = httpx.get(
+            f"{URL}/search",
+            params={"q": q["query"], "mode": mode},
+            timeout=30.0,
+        )
+        response.raise_for_status()
+
 print(f"  {'mode':10}  {'P50':>7}  {'P95':>7}  {'P99':>7}  {'P99(wall)':>9}")
 results = {}
 for mode in ("keyword", "semantic", "hybrid"):
+    warmup_mode(mode, num_queries=10)
     res = benchmark_mode(mode)
     results[mode] = res
     print(f"  {mode:10}  {res['p50_server']:>5.1f}ms  {res['p95_server']:>5.1f}ms  "
